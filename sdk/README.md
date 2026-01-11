@@ -21,6 +21,7 @@ const r1 = await client.riskToken({
 
 if (!r1.ok && r1.status === 402) {
   console.log('Need payment:', r1.payment);
+  console.log('Request id:', r1.requestId);
   // Pay `r1.payment.price` USDC on Base to `r1.payment.recipient`.
   // Then retry with your tx hash:
   const txHash = '0x...';
@@ -37,5 +38,6 @@ if (!r1.ok && r1.status === 402) {
 
 ## Notes
 - The SDK returns a tagged union `{ ok: true } | { ok: false }` so you can handle 402 cleanly.
+- `requestId` is populated from the `x-request-id` response header (useful for support/debug).
 - For structured response fields, use the OpenAPI schema:
   - https://tokensentry.net/openapi.json

@@ -10,6 +10,7 @@ export type PaymentRequiredInfo = {
 export type PaymentRequiredResult = {
   ok: false;
   status: 402;
+  requestId?: string;
   payment: PaymentRequiredInfo;
   body?: unknown;
 };
@@ -17,6 +18,7 @@ export type PaymentRequiredResult = {
 export type ApiErrorResult = {
   ok: false;
   status: number;
+  requestId?: string;
   error?: string;
   code?: string;
   body?: unknown;
@@ -25,6 +27,7 @@ export type ApiErrorResult = {
 export type ApiOkResult<T> = {
   ok: true;
   status: number;
+  requestId?: string;
   data: T;
 };
 
@@ -118,10 +121,11 @@ export class TokenSentryClient {
     if (input.txHash) headers['x402-tx-hash'] = input.txHash;
 
     const res = await this.fetchImpl(url, { method: 'GET', headers });
+    const requestId = res.headers.get('x-request-id') || undefined;
 
     if (res.status === 402) {
       const body = await readJsonOrText(res);
-      return { ok: false, status: 402, payment: extractPaymentRequiredInfo(res), body };
+      return { ok: false, status: 402, requestId, payment: extractPaymentRequiredInfo(res), body };
     }
 
     const body = await readJsonOrText(res);
@@ -131,13 +135,14 @@ export class TokenSentryClient {
       return {
         ok: false,
         status: res.status,
+        requestId,
         error: maybeObj?.error,
         code: maybeObj?.code,
         body,
       };
     }
 
-    return { ok: true, status: res.status, data: (body || {}) as TokenRiskResponse };
+    return { ok: true, status: res.status, requestId, data: (body || {}) as TokenRiskResponse };
   }
 
   /**
@@ -181,9 +186,11 @@ export class TokenSentryClient {
       body: JSON.stringify(bodyIn),
     });
 
+    const requestId = res.headers.get('x-request-id') || undefined;
+
     if (res.status === 402) {
       const body = await readJsonOrText(res);
-      return { ok: false, status: 402, payment: extractPaymentRequiredInfo(res), body };
+      return { ok: false, status: 402, requestId, payment: extractPaymentRequiredInfo(res), body };
     }
 
     const body = await readJsonOrText(res);
@@ -193,12 +200,13 @@ export class TokenSentryClient {
       return {
         ok: false,
         status: res.status,
+        requestId,
         error: maybeObj?.error,
         code: maybeObj?.code,
         body,
       };
     }
 
-    return { ok: true, status: res.status, data: (body || {}) as PretradeCheckResponse };
+    return { ok: true, status: res.status, requestId, data: (body || {}) as PretradeCheckResponse };
   }
 }

@@ -26,6 +26,10 @@ curl -i "https://tokensentry.net/v1/risk/token?chain=base&address=0x420000000000
   -H "x402-tx-hash: 0xYOUR_TX_HASH"
 ```
 
+On success (HTTP 200), the response includes:
+- `x-request-id` header
+- `meta` object in JSON (e.g. `meta.request_id`, `meta.latency_ms`, `meta.cache`)
+
 ## 4) Optional: automated pay+retry (Node)
 
 See [scripts/x402-pay-and-call.mjs](../scripts/x402-pay-and-call.mjs).

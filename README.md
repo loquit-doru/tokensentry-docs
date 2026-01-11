@@ -45,6 +45,10 @@ Unpaid requests return `402 Payment Required` and pricing headers:
 - `x402-chain`
 - `x402-recipient`
 
+Paid `200` responses include:
+- `x-request-id` header (for support / correlation)
+- `meta` in JSON with `schema_version`, `analyzed_at`, `request_id`, `latency_ms`, `cache`
+
 Client flow:
 1. Call the endpoint → receive `402` + `x402-*` headers
 2. Pay `x402-price` (USDC) on Base to `x402-recipient`
