@@ -14,6 +14,7 @@ Start here:
 - Quickstart: ./examples/quickstart.md
 - Postman collection: ./postman_collection.json
 - Scripts: ./scripts/README.md
+- TypeScript SDK (minimal): ./sdk/README.md
 
 ## What it does
 TokenSentry returns token risk signals for AI/bots before swaps.
