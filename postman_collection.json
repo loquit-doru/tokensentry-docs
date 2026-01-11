@@ -1,0 +1,65 @@
+{
+  "info": {
+    "name": "TokenSentry Risk Oracle",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://tokensentry.net/health",
+          "protocol": "https",
+          "host": ["tokensentry", "net"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Demo (free)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://tokensentry.net/v1/analyze/demo",
+          "protocol": "https",
+          "host": ["tokensentry", "net"],
+          "path": ["v1", "analyze", "demo"]
+        }
+      }
+    },
+    {
+      "name": "Risk (unpaid -> 402)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "https://tokensentry.net/v1/risk/token?chain=base&address=0x4200000000000000000000000000000000000006",
+          "protocol": "https",
+          "host": ["tokensentry", "net"],
+          "path": ["v1", "risk", "token"],
+          "query": [
+            { "key": "chain", "value": "base" },
+            { "key": "address", "value": "0x4200000000000000000000000000000000000006" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Pretrade check (unpaid -> 402)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "content-type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chain\": \"base\",\n  \"address\": \"0x4200000000000000000000000000000000000006\",\n  \"direction\": \"sell\"\n}"
+        },
+        "url": {
+          "raw": "https://tokensentry.net/v1/pretrade/check",
+          "protocol": "https",
+          "host": ["tokensentry", "net"],
+          "path": ["v1", "pretrade", "check"]
+        }
+      }
+    }
+  ]
+}
