@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TokenSentry browser example (x402)</title>
+    <style>
+      :root { color-scheme: dark; --bg: #0b0f1a; --panel: #0f1629; --text: #e8eefc; --muted: #a7b3d3; --line: #1f2b4a; --brand: #7aa7ff; }
+      body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial; background: var(--bg); color: var(--text); }
+      a { color: var(--brand); }
+      .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 40px; }
+      .card { border: 1px solid var(--line); background: rgba(255,255,255,.02); border-radius: 14px; padding: 14px; margin-top: 12px; }
+      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+      input, select, textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: rgba(255,255,255,.02); color: var(--text); }
+      textarea { min-height: 110px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      @media (min-width: 840px) { .row { grid-template-columns: 1fr 1fr; } }
+      button { cursor: pointer; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: rgba(255,255,255,.02); color: var(--text); font-weight: 650; }
+      button.primary { border-color: rgba(122,167,255,.5); background: rgba(122,167,255,.12); }
+      pre { white-space: pre-wrap; word-break: break-word; border: 1px solid var(--line); background: rgba(15,22,41,.55); padding: 12px; border-radius: 12px; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .muted { color: var(--muted); }
+      .pill { display: inline-flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; color: var(--muted); font-size: 12px; }
+      .pill b { color: var(--text); }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1 style="margin: 0 0 6px;">TokenSentry browser example</h1>
+      <div class="muted">Zero dependencies. Demonstrates x402 flow: call → 402 + headers → pay → retry with <code>x402-tx-hash</code>.</div>
+
+      <div class="card">
+        <div class="row">
+          <div>
+            <label>Endpoint</label>
+            <select id="endpoint">
+              <option value="risk">GET /v1/risk/token</option>
+              <option value="pretrade">POST /v1/pretrade/check</option>
+            </select>
+          </div>
+          <div>
+            <label>Base URL</label>
+            <input id="baseUrl" value="https://tokensentry.net" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top: 12px;">
+          <div>
+            <label>Chain</label>
+            <select id="chain">
+              <option value="base">base</option>
+              <option value="ethereum">ethereum</option>
+              <option value="arbitrum">arbitrum</option>
+              <option value="optimism">optimism</option>
+              <option value="polygon">polygon</option>
+              <option value="bsc">bsc</option>
+            </select>
+          </div>
+          <div>
+            <label>Token address</label>
+            <input id="address" value="0x4200000000000000000000000000000000000006" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top: 12px;">
+          <div>
+            <label>timeout_ms (optional)</label>
+            <input id="timeoutMs" placeholder="250..10000" />
+          </div>
+          <div>
+            <label>x402-tx-hash (optional retry)</label>
+            <input id="txHash" placeholder="0x..." />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top: 12px;">
+          <div>
+            <label>Pretrade JSON body (only for POST /v1/pretrade/check)</label>
+            <textarea id="pretradeBody">{
+  "direction": "sell"
+}</textarea>
+            <div class="muted" style="margin-top: 6px;">We’ll merge this into { chain, address, ... }.</div>
+          </div>
+          <div>
+            <label>Status</label>
+            <div class="pill"><b id="status">—</b> <span id="statusHint">Ready</span></div>
+            <div style="height: 10px"></div>
+            <label>x402 headers (when 402)</label>
+            <pre id="x402">(none)</pre>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="call">Call API</button>
+          <button id="clear">Clear output</button>
+          <a class="pill" href="https://tokensentry.net/openapi" target="_blank" rel="noreferrer"><b>OpenAPI</b></a>
+          <a class="pill" href="https://tokensentry.net/try" target="_blank" rel="noreferrer"><b>Try</b></a>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Response headers</label>
+        <pre id="headers">(none)</pre>
+      </div>
+
+      <div class="card">
+        <label>Response body</label>
+        <pre id="body">(none)</pre>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 8px; font-size: 16px;">How to proceed on 402</h2>
+        <div class="muted">
+          If the call returns <b>402</b>, read <code>x402-price</code>, <code>x402-recipient</code>, <code>x402-chain</code>.
+          Pay that amount (USDC on Base) to the recipient, then retry the same request with <code>x402-tx-hash</code> set to your transaction hash.
+        </div>
+      </div>
+
+      <div class="muted" style="margin-top: 12px;">Tip: open DevTools → Network to see the request/response.</div>
+    </div>
+
+    <script>
+      function $(id) { return document.getElementById(id); }
+
+      function setStatus(code, hint) {
+        $('status').textContent = String(code ?? '—');
+        $('statusHint').textContent = hint || '';
+      }
+
+      function pretty(obj) {
+        if (obj == null) return '';
+        if (typeof obj === 'string') return obj;
+        try { return JSON.stringify(obj, null, 2); } catch { return String(obj); }
+      }
+
+      function normalizeBaseUrl(u) {
+        const s = String(u || '').trim() || 'https://tokensentry.net';
+        return s.endsWith('/') ? s.slice(0, -1) : s;
+      }
+
+      async function readBody(res) {
+        const ct = res.headers.get('content-type') || '';
+        const text = await res.text();
+        if (!text) return undefined;
+        if (ct.includes('application/json')) {
+          try { return JSON.parse(text); } catch { return { raw: text }; }
+        }
+        try { return JSON.parse(text); } catch { return { raw: text }; }
+      }
+
+      function headerDump(res) {
+        const lines = [];
+        for (const [k, v] of res.headers.entries()) lines.push(`${k}: ${v}`);
+        lines.sort();
+        return lines.join('\n');
+      }
+
+      function x402Dump(res) {
+        const price = res.headers.get('x402-price');
+        const recipient = res.headers.get('x402-recipient');
+        const chain = res.headers.get('x402-chain');
+        const reason = res.headers.get('x402-reason');
+
+        if (!price && !recipient && !chain && !reason) return '(none)';
+
+        const parts = [];
+        if (price) parts.push(`x402-price: ${price}`);
+        if (chain) parts.push(`x402-chain: ${chain}`);
+        if (recipient) parts.push(`x402-recipient: ${recipient}`);
+        if (reason) parts.push(`x402-reason: ${reason}`);
+        return parts.join('\n');
+      }
+
+      async function call() {
+        $('x402').textContent = '(loading...)';
+        $('headers').textContent = '(loading...)';
+        $('body').textContent = '(loading...)';
+        setStatus('…', 'Calling');
+
+        const baseUrl = normalizeBaseUrl($('baseUrl').value);
+        const endpoint = $('endpoint').value;
+        const chain = $('chain').value;
+        const address = $('address').value.trim();
+        const timeoutMs = $('timeoutMs').value.trim();
+        const txHash = $('txHash').value.trim();
+
+        const params = new URLSearchParams();
+        if (timeoutMs) params.set('timeout_ms', timeoutMs);
+
+        let url;
+        let init;
+
+        if (endpoint === 'risk') {
+          const q = new URLSearchParams();
+          q.set('chain', chain);
+          q.set('address', address);
+          if (timeoutMs) q.set('timeout_ms', timeoutMs);
+
+          url = `${baseUrl}/v1/risk/token?${q.toString()}`;
+          init = { method: 'GET', headers: {} };
+        } else {
+          url = `${baseUrl}/v1/pretrade/check${params.toString() ? `?${params.toString()}` : ''}`;
+          let extra = {};
+          try {
+            extra = JSON.parse($('pretradeBody').value || '{}');
+          } catch {
+            extra = {};
+          }
+          const body = { chain, address, ...extra };
+          init = {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+          };
+        }
+
+        if (txHash) init.headers['x402-tx-hash'] = txHash;
+
+        let res;
+        try {
+          res = await fetch(url, init);
+        } catch (e) {
+          setStatus('ERR', 'Network error');
+          $('x402').textContent = '(none)';
+          $('headers').textContent = '(none)';
+          $('body').textContent = String(e?.message || e);
+          return;
+        }
+
+        const body = await readBody(res);
+
+        setStatus(res.status, res.status === 402 ? 'Payment required' : (res.ok ? 'OK' : 'Error'));
+        $('headers').textContent = headerDump(res) || '(none)';
+        $('x402').textContent = x402Dump(res);
+        $('body').textContent = pretty(body) || '(empty)';
+      }
+
+      $('call').addEventListener('click', () => void call());
+      $('clear').addEventListener('click', () => {
+        setStatus('—', 'Ready');
+        $('x402').textContent = '(none)';
+        $('headers').textContent = '(none)';
+        $('body').textContent = '(none)';
+      });
+    </script>
+  </body>
+</html>

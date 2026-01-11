@@ -12,6 +12,7 @@ This repo is the public integration surface for TokenSentry.
 
 Start here:
 - Quickstart: ./examples/quickstart.md
+- Browser example (zero deps): ./examples/browser.html
 - Postman collection: ./postman_collection.json
 - Scripts: ./scripts/README.md
 - TypeScript SDK (minimal): ./sdk/README.md
