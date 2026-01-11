@@ -1,0 +1,9 @@
+{
+  "name": "tokensentry-docs",
+  "private": true,
+  "description": "TokenSentry public integration docs (OpenAPI/tools/x402 flow)",
+  "type": "module",
+  "scripts": {
+    "x402:dry": "DRY_RUN=1 node scripts/x402-pay-and-call.mjs"
+  }
+}

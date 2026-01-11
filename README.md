@@ -10,6 +10,11 @@ This repo is the public integration surface for TokenSentry.
 - Registry JSON: https://tokensentry.net/registry.json
 - Public stats: https://tokensentry.net/stats
 
+Start here:
+- Quickstart: ./examples/quickstart.md
+- Postman collection: ./postman_collection.json
+- Scripts: ./scripts/README.md
+
 ## What it does
 TokenSentry returns token risk signals for AI/bots before swaps.
 
@@ -23,6 +28,14 @@ Primary endpoints:
 ```bash
 curl -i https://tokensentry.net/v1/analyze/demo
 ```
+
+## Postman
+
+Import the collection:
+- `postman_collection.json`
+
+Or import directly from OpenAPI:
+- https://tokensentry.net/openapi.json
 
 ## Paid calls (x402 flow)
 Unpaid requests return `402 Payment Required` and pricing headers:
